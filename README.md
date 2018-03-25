@@ -20,8 +20,8 @@ field (pointer array), matches `size`.
 Base type for Gromer is `gr_t`. `gr_t` is pointer to Gromer
 struct. Some functions in Gromer library require a reference to
 Gromer. Reference type is `gr_p` and it is a pointer to pointer of
-Gromer struct. `gr_p` is required whenever there possibility that the
-Gromer handle might get relocated in memory. This happens when more
+Gromer struct. `gr_p` is required whenever there is possibility that
+Gromer might get relocated in memory. This happens when more
 reservation is needed for pointer array, or when Gromer is destroyed.
 
 Gromer can be created with default size using `gr_new()`. Default size
@@ -37,11 +37,12 @@ Gromer can be destroyed with:
 `gr_destroy()` requires Gromer reference, since `gr` is set to `NULL`
 after destroy.
 
-Items can be added to the end of container:
+Items can be added to the end of the container:
 
+    void* data = obj;
     gr_push( &gr, data );
 
-Items can be removed from the end of container:
+Items can be removed from the end of the container:
 
     data = gr_pop( gr );
 
