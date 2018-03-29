@@ -140,8 +140,11 @@ void test_random_access( void )
     TEST_ASSERT_EQUAL_STRING( text, gr_item( gr, 1, char* ) );
     
     char* item;
+    gr_size_t idx = 0;
     gr_for_each( gr, item, char* ) {
+        TEST_ASSERT_EQUAL( idx, gr_idx );
         TEST_ASSERT_EQUAL_STRING( text, item );
+        idx++;
     }
 
     for ( int i = 0; i < 2*GR_DEFAULT_SIZE; i++ ) {
