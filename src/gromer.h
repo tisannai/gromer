@@ -98,8 +98,10 @@ typedef int ( *gr_compare_fn_p )( void* a, void* b );
 
 
 /** Iterate over all items. */
-#define gr_for_each( gr, iter, cast )                                   \
-    for ( gr_size_t gr_idx = 0; ( iter = ( cast )( gr )->data[ gr_idx ] ) && ( gr_idx < ( gr )->used ); gr_idx++ )
+#define gr_for_each( gr, iter, cast )                                             \
+    for ( gr_size_t gr_idx = 0;                                                   \
+          ( iter = ( cast )( gr )->data[ gr_idx ] ) && ( gr_idx < ( gr )->used ); \
+          gr_idx++ )
 
 /** Item at index with casting to target type. */
 #define gr_item( gr, idx, cast ) ( ( cast )( gr )->data[ ( idx ) ] )
