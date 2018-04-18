@@ -94,7 +94,7 @@ typedef gr_t*              gr_p; /**< Gromer pointer reference. */
 typedef int ( *gr_resize_fn_p )( gr_p bp, gr_size_t new_size, void* state );
 
 /** Compare function type. */
-typedef int ( *gr_compare_fn_p )( void* a, void* b );
+typedef int ( *gr_compare_fn_p )( const void* a, const void* b );
 
 
 /** Iterate over all items. */
@@ -140,6 +140,7 @@ typedef int ( *gr_compare_fn_p )( void* a, void* b );
 #define grdel gr_delete
 #define grfnd gr_find
 #define grfnw gr_find_with
+
 #define grfor gr_for_each
 /** @endcond gromer_none */
 
@@ -410,6 +411,15 @@ gr_pos_t gr_find( gr_t gr, void* item );
  * @return Item index (or GR_NOT_INDEX).
  */
 gr_pos_t gr_find_with( gr_t gr, gr_compare_fn_p compare, void* ref );
+
+
+/**
+ * Sort Gromer items.
+ *
+ * @param gr      Gromer.
+ * @param compare Compare function.
+ */
+void gr_sort( gr_t gr, gr_compare_fn_p compare );
 
 
 #endif

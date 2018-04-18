@@ -8,6 +8,7 @@
  */
 
 #include <string.h>
+#include <stdlib.h>
 #include "gromer.h"
 
 
@@ -254,6 +255,12 @@ void* gr_delete_at( gr_t gr, gr_size_t pos )
     gm_used( gr ) = new_used;
 
     return ret;
+}
+
+
+void gr_sort( gr_t gr, gr_compare_fn_p compare )
+{
+    qsort( gr->data, gr->used, gr_unit_size, compare );
 }
 
 

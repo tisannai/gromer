@@ -1,11 +1,12 @@
 #include "unity.h"
 #include "gromer.h"
+#include <string.h>
 
 
 void test_basics( void )
 {
-    gr_t gr;
-    gr_t dup;
+    gr_t  gr;
+    gr_t  dup;
     char* text = "text";
     void* ret;
 
@@ -20,7 +21,7 @@ void test_basics( void )
     gr = gr_new_sized( 12 );
     TEST_ASSERT_EQUAL( 12, gr_size( gr ) );
     TEST_ASSERT_EQUAL( 0, gr_used( gr ) );
-    
+
     gr_push( &gr, text );
     TEST_ASSERT_EQUAL( 12, gr_size( gr ) );
     TEST_ASSERT_EQUAL( 1, gr_used( gr ) );
@@ -63,8 +64,8 @@ void test_basics( void )
     gr_add( &gr, NULL );
     gr_add( &gr, text );
     dup = gr_duplicate( gr );
-    for ( gr_size_t i = 0; i < gr_used(gr); i++ ) {
-        TEST_ASSERT( gr_nth(dup,i) == gr_nth(gr,i) );
+    for ( gr_size_t i = 0; i < gr_used( gr ); i++ ) {
+        TEST_ASSERT( gr_nth( dup, i ) == gr_nth( gr, i ) );
     }
 
     gr_destroy( &gr );
@@ -73,7 +74,7 @@ void test_basics( void )
 }
 
 
-int gr_compare_fn( void* a, void* b )
+int gr_compare_fn( const void* a, const void* b )
 {
     if ( a == b )
         return 1;
@@ -84,15 +85,15 @@ int gr_compare_fn( void* a, void* b )
 
 void test_random_access( void )
 {
-    gr_t gr;
-    char* text = "text";
-    void* tmp;
+    gr_t     gr;
+    char*    text = "text";
+    void*    tmp;
     gr_pos_t pos;
 
     gr = gr_new();
     gr_insert_at( &gr, 0, text );
     gr_insert_at( &gr, 0, NULL );
-    TEST_ASSERT_EQUAL( NULL, gr_data( gr )[0] );
+    TEST_ASSERT_EQUAL( NULL, gr_data( gr )[ 0 ] );
     TEST_ASSERT_EQUAL( text, gr_last( gr ) );
 
     tmp = gr_swap( gr, 0, text );
@@ -114,43 +115,44 @@ void test_random_access( void )
 
 
     for ( int i = 0; i < GR_DEFAULT_SIZE; i++ ) {
-        gr_insert_at( &gr, gr_used( gr )-1, text );
+        gr_insert_at( &gr, gr_used( gr ) - 1, text );
     }
-    
-    TEST_ASSERT_EQUAL( 2*GR_DEFAULT_SIZE, gr_size( gr ) );
+
+    TEST_ASSERT_EQUAL( 2 * GR_DEFAULT_SIZE, gr_size( gr ) );
 
     for ( int i = 0; i < GR_DEFAULT_SIZE; i++ ) {
-        gr_insert_if( gr, gr_used( gr )-1, text );
+        gr_insert_if( gr, gr_used( gr ) - 1, text );
     }
-    
-    TEST_ASSERT_EQUAL( 2*GR_DEFAULT_SIZE, gr_size( gr ) );
 
-    for ( int i = 0; i < GR_DEFAULT_SIZE/2; i++ ) {
+    TEST_ASSERT_EQUAL( 2 * GR_DEFAULT_SIZE, gr_size( gr ) );
+
+    for ( int i = 0; i < GR_DEFAULT_SIZE / 2; i++ ) {
         tmp = gr_delete_at( gr, 0 );
         TEST_ASSERT_EQUAL( text, tmp );
     }
 
-    for ( int i = 0; i < GR_DEFAULT_SIZE/2; i++ ) {
-        gr_delete_at( gr, gr_used( gr )-1 );
+    for ( int i = 0; i < GR_DEFAULT_SIZE / 2; i++ ) {
+        gr_delete_at( gr, gr_used( gr ) - 1 );
     }
 
     TEST_ASSERT_EQUAL( text, gr_first( gr ) );
     TEST_ASSERT_EQUAL( text, gr_last( gr ) );
 
     TEST_ASSERT_EQUAL_STRING( text, gr_item( gr, 1, char* ) );
-    
-    char* item;
+
+    char*     item;
     gr_size_t idx = 0;
-    gr_for_each( gr, item, char* ) {
+    gr_for_each( gr, item, char* )
+    {
         TEST_ASSERT_EQUAL( idx, gr_idx );
         TEST_ASSERT_EQUAL_STRING( text, item );
         idx++;
     }
 
-    for ( int i = 0; i < 2*GR_DEFAULT_SIZE; i++ ) {
+    for ( int i = 0; i < 2 * GR_DEFAULT_SIZE; i++ ) {
         gr_pop( gr );
     }
-    
+
     TEST_ASSERT_EQUAL( NULL, gr_first( gr ) );
     TEST_ASSERT_EQUAL( NULL, gr_last( gr ) );
     TEST_ASSERT_EQUAL( NULL, gr_nth( gr, 0 ) );
@@ -170,7 +172,42 @@ void test_random_access( void )
     TEST_ASSERT_EQUAL( 0, gr_is_empty( gr ) );
     TEST_ASSERT_EQUAL( 0, gr_is_full( gr ) );
 
-    gr = gr_new_sized(  0 );
+    gr = gr_new_sized( 0 );
     TEST_ASSERT_EQUAL( GR_MIN_SIZE, gr_size( gr ) );
+    gr_destroy( &gr );
+}
+
+
+int gr_sort_compare( const void* a, const void* b )
+{
+    char* sa = (char*)a;
+    char* sb = (char*)b;
+
+    return strcmp( sa, sb );
+}
+
+
+void test_sorting( void )
+{
+    gr_t  gr;
+    char* str1 = "aaa";
+    char* str2 = "bbb";
+    char* str3 = "ccc";
+
+    gr = gr_new();
+    gr_push( &gr, str3 );
+    gr_push( &gr, str1 );
+    gr_push( &gr, str2 );
+
+    TEST_ASSERT_EQUAL_STRING( gr_item( gr, 0, char* ), str3 );
+    TEST_ASSERT_EQUAL_STRING( gr_item( gr, 1, char* ), str1 );
+    TEST_ASSERT_EQUAL_STRING( gr_item( gr, 2, char* ), str2 );
+
+    gr_sort( gr, gr_sort_compare );
+
+    TEST_ASSERT_EQUAL_STRING( gr_item( gr, 0, char* ), str1 );
+    TEST_ASSERT_EQUAL_STRING( gr_item( gr, 1, char* ), str2 );
+    TEST_ASSERT_EQUAL_STRING( gr_item( gr, 2, char* ), str3 );
+
     gr_destroy( &gr );
 }
