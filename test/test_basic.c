@@ -211,3 +211,40 @@ void test_sorting( void )
 
     gr_destroy( &gr );
 }
+
+
+void test_static( void )
+{
+    gr_t  gr;
+    char* str1 = "aaa";
+    char* str2 = "bbb";
+
+    gr_local_use( gr, buf, 8 );
+
+    TEST_ASSERT_TRUE( gr_get_local( gr ) );
+
+    gr_push( &gr, str1 );
+    gr_push( &gr, str2 );
+    gr_push( &gr, str1 );
+    gr_push( &gr, str2 );
+    gr_push( &gr, str1 );
+    gr_push( &gr, str2 );
+    gr_push( &gr, str1 );
+    gr_push( &gr, str2 );
+
+    TEST_ASSERT_EQUAL_STRING( gr_item( gr, 0, char* ), str1 );
+    TEST_ASSERT_EQUAL_STRING( gr_item( gr, 1, char* ), str2 );
+    TEST_ASSERT_EQUAL_STRING( gr_item( gr, 2, char* ), str1 );
+
+    TEST_ASSERT_TRUE( gr_get_local( gr ) );
+
+    gr_push( &gr, str1 );
+    gr_push( &gr, str2 );
+
+    TEST_ASSERT_FALSE( gr_get_local( gr ) );
+
+    gr_destroy( &gr );
+
+    gr_use( &gr, buf, gr_struct_size( 8 ) );
+    gr_destroy( &gr );
+}

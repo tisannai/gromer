@@ -105,6 +105,38 @@ the searched item is at current position or not.
 
     data_idx = gr_find_with( gr, compare_fn, data );
 
+
+Gromer can also be used within stack allocated memory. First you have
+to have some stack storage available. This can be done with a
+convenience macro.
+
+    gr_t gr;
+    gr_local_use( gr, buf, 16 );
+
+This will initialize `gr` to stack allocated storage where Gromer has
+size of 16. Note that the stack allocation is bigger than 16, since
+Gromer struct requires storage as well. `gr_local_use` uses `gr_use`
+function for assigning `gr` to the storage.
+
+When Gromer is taken into use through `gr_use` it is marked as
+"local". This means that it will not be freed with `gr_destroy`. Stack
+allocated Gromer is automatically changed to a heap allocated Gromer
+if Gromer requires resizing. This is quite powerful optimization,
+since often stack allocated memory is enough and heap reservation
+(which is slowish) is not needed. `gr_destroy` can be called for
+Gromer whether its "local" or not. If Gromer is "local", no memory is
+released, but Gromer reference is set to NULL.
+
+By default Gromer library uses malloc and friends to do heap
+allocations. If you define GR_MEM_API, you can use your own memory
+allocation functions.
+
+Custom memory function prototypes:
+    void* gr_malloc ( size_t size );
+    void  gr_free   ( void*  ptr  );
+    void* gr_realloc( void*  ptr, size_t size );
+
+
 See Doxygen docs and `gromer.h` for details about Gromer API. Also
 consult the test directory for usage examples.
 

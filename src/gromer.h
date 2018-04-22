@@ -81,7 +81,7 @@ typedef int64_t gr_pos_t;
  */
 struct gr_struct_s
 {
-    gr_size_t size;      /**< Reservation size for data. */
+    gr_size_t size;      /**< Reservation size for data (N mod 2==0). */
     gr_size_t used;      /**< Used count for data. */
     void*     data[ 0 ]; /**< Pointer array. */
 };
@@ -91,7 +91,7 @@ typedef gr_t*              gr_p; /**< Gromer pointer reference. */
 
 
 /** Resize function type. */
-typedef int ( *gr_resize_fn_p )( gr_p bp, gr_size_t new_size, void* state );
+typedef int ( *gr_resize_fn_p )( gr_p gp, gr_size_t new_size, void* state );
 
 /** Compare function type. */
 typedef int ( *gr_compare_fn_p )( const void* a, const void* b );
@@ -107,10 +107,19 @@ typedef int ( *gr_compare_fn_p )( const void* a, const void* b );
 #define gr_item( gr, idx, cast ) ( ( cast )( gr )->data[ ( idx ) ] )
 
 /** Shift item from first index. */
-#define gr_shift( bp ) gr_delete_at( bp, 0 )
+#define gr_shift( gp ) gr_delete_at( gp, 0 )
 
 /** Insert item to first index. */
-#define gr_unshift( bp, item ) gr_insert_at( bp, 0, item )
+#define gr_unshift( gp, item ) gr_insert_at( gp, 0, item )
+
+/** Gromer struct size. */
+#define gr_struct_size( size ) ( sizeof( gr_s ) + ( size ) * sizeof( void* ) )
+
+/** Make allocation for local (stack) Gromer. */
+#define gr_local_use( gr, buf, size )    \
+    void* buf[ gr_struct_size( size ) ]; \
+    gr_use( &gr, buf, gr_struct_size( size ) )
+
 
 
 /* Short names for functions. */
@@ -170,6 +179,16 @@ gr_t gr_new( void );
  * @return Gromer.
  */
 gr_t gr_new_sized( gr_size_t size );
+
+
+/**
+ * Use existing memory allocation for Gromer.
+ *
+ * @param gp   Gromer reference.
+ * @param mem  Allocation for Gromer.
+ * @param size Allocation size (in bytes).
+ */
+void gr_use( gr_p gp, void* mem, gr_size_t size );
 
 
 /**
@@ -310,6 +329,15 @@ void* gr_delete_at( gr_t gr, gr_size_t pos );
 
 
 /**
+ * Sort Gromer items.
+ *
+ * @param gr      Gromer.
+ * @param compare Compare function.
+ */
+void gr_sort( gr_t gr, gr_compare_fn_p compare );
+
+
+/**
  * Return count of container usage.
  *
  * @param gr Gromer.
@@ -414,12 +442,22 @@ gr_pos_t gr_find_with( gr_t gr, gr_compare_fn_p compare, void* ref );
 
 
 /**
- * Sort Gromer items.
+ * Set Gromer as local.
  *
- * @param gr      Gromer.
- * @param compare Compare function.
+ * @param gr  Gromer.
+ * @param val Local (or not).
  */
-void gr_sort( gr_t gr, gr_compare_fn_p compare );
+void gr_set_local( gr_t gr, int val );
+
+
+/**
+ * Return Gromer local mode.
+ *
+ * @param gr Gromer.
+ *
+ * @return 1 if local (else 0).
+ */
+int gr_get_local( gr_t gr );
 
 
 #endif

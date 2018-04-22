@@ -18,23 +18,25 @@
 #define gr_true  1
 #define gr_false 0
 
-#define gr_struct_size(size) ( sizeof(gr_s) + size*sizeof(void*) )
+#define gr_smsk            0xFFFFFFFFFFFFFFFEL
 
 #define gr_unit_size       ( sizeof( void* ) )
-#define gr_byte_size( gr ) ( gr_unit_size * gr->size )
+#define gr_byte_size( gr ) ( gr_unit_size * gm_size( gr) )
 #define gr_used_size( gr ) ( gr_unit_size * gr->used )
-#define gr_incr_size( gr ) ( 2*((gr)->size) )
+#define gr_incr_size( gr ) ( 2*(gm_size(gr)) )
 
+#define gr_snor(size)      (((size) & 0x1L) ? (size) + 1 : (size))
+#define gr_local( gr )     ( (gr)->size & 0x1L )
 
-#define gm_any( gr ) (    ( gr )->used > 0 )
-#define gm_empty( gr )    ( ( gr )->used == 0 )
-#define gm_used( gr )     ( gr )->used
-#define gm_size( gr )     ( gr )->size
-#define gm_data( gr )     ( gr )->data
-#define gm_end( gr )      ( gr )->data[ ( gr )->used ]
-#define gm_last( gr )     ( gr )->data[ ( gr )->used - 1 ]
-#define gm_first( gr )    ( gr )->data[ 0 ]
-#define gm_nth( gr, pos ) ( gr )->data[ ( pos ) ]
+#define gm_any( gr ) (     ( gr )->used > 0 )
+#define gm_empty( gr )     ( ( gr )->used == 0 )
+#define gm_used( gr )      ( gr )->used
+#define gm_size( gr )      ( ( gr )->size & gr_smsk )
+#define gm_data( gr )      ( gr )->data
+#define gm_end( gr )       ( gr )->data[ ( gr )->used ]
+#define gm_last( gr )      ( gr )->data[ ( gr )->used - 1 ]
+#define gm_first( gr )     ( gr )->data[ 0 ]
+#define gm_nth( gr, pos )  ( gr )->data[ ( pos ) ]
 
 /** @endcond gromer_none */
 
@@ -42,6 +44,7 @@
 
 
 
+static gr_size_t gr_legal_size( gr_size_t size );
 static gr_size_t gr_norm_idx( gr_t gr, gr_size_t idx );
 static void gr_resize_to( gr_p gp, gr_size_t new_size );
 
@@ -62,11 +65,11 @@ gr_t gr_new_sized( gr_size_t size )
 {
     gr_t gr;
 
-    if ( size < GR_MIN_SIZE )
-        size = GR_MIN_SIZE;
+    size = gr_legal_size( size );
 
     gr = (gr_t)gr_malloc( gr_struct_size( size ) );
     gr->size = size;
+    gr_set_local( gr, 0 );
     gr->used = 0;
     gr->data[ 0 ] = NULL;
 
@@ -74,17 +77,37 @@ gr_t gr_new_sized( gr_size_t size )
 }
 
 
+void gr_use( gr_p gp, void* mem, gr_size_t size )
+{
+    gr_assert( ( size % sizeof( void* ) ) == 0 );
+    gr_assert( size >= gr_struct_size( GR_MIN_SIZE ) );
+
+    gr_t gr;
+    gr = (gr_t)mem;
+    gr->size = ( size - sizeof( gr_s ) ) / sizeof( void* );
+    gr_set_local( gr, 1 );
+    gr->used = 0;
+    gr->data[ 0 ] = NULL;
+    *gp = gr;
+}
+
+
 void gr_destroy( gr_p gp )
 {
     if ( *gp == NULL )
         return;
-    gr_free( *gp );
+
+    if ( !gr_local( *gp ) )
+        gr_free( *gp );
+
     *gp = NULL;
 }
 
 
 void gr_resize( gr_p gp, gr_size_t new_size )
 {
+    new_size = gr_legal_size( new_size );
+
     if ( new_size >= gm_used( *gp ) )
         gr_resize_to( gp, new_size );
 }
@@ -356,10 +379,44 @@ gr_pos_t gr_find_with( gr_t gr, gr_compare_fn_p compare, void* ref )
 }
 
 
+void gr_set_local( gr_t gr, int val )
+{
+    if ( val != 0 )
+        gr->size = gr->size | 0x1L;
+    else
+        gr->size = gr->size & gr_smsk;
+}
+
+
+int gr_get_local( gr_t gr )
+{
+    return gr_local( gr );
+}
+
+
 
 /* ------------------------------------------------------------
  * Internal support:
  */
+
+
+/**
+ * Convert size to a legal Gromer size.
+ *
+ * @param size Requested size.
+ *
+ * @return Legal size.
+ */
+static gr_size_t gr_legal_size( gr_size_t size )
+{
+    size = gr_snor( size );
+
+    if ( size < GR_MIN_SIZE )
+        size = GR_MIN_SIZE;
+
+    return size;
+}
+
 
 /**
  * Normalize (possibly negative) Gromer index. Positive index is
@@ -380,9 +437,7 @@ gr_pos_t gr_find_with( gr_t gr, gr_compare_fn_p compare, void* ref )
  */
 static gr_size_t gr_norm_idx( gr_t gr, gr_size_t idx )
 {
-#ifndef GROMER_NO_ASSERT
     gr_assert( idx < gm_used( gr ) );
-#endif
 
     if ( idx >= gm_used( gr ) )
         return gm_used( gr ) - 1; // GCOV_EXCL_LINE
@@ -399,8 +454,16 @@ static gr_size_t gr_norm_idx( gr_t gr, gr_size_t idx )
  */
 static void gr_resize_to( gr_p gp, gr_size_t new_size )
 {
-    *gp = (gr_t)gr_realloc( *gp, gr_struct_size( new_size ) );
-    gm_size( *gp ) = new_size;
+    if ( gr_get_local( *gp ) )
+        *gp = (gr_t)gr_malloc( gr_struct_size( new_size ) );
+    else
+        *gp = (gr_t)gr_realloc( *gp, gr_struct_size( new_size ) );
+
+    ( *gp )->size = new_size;
+
+    /* NOTE: Setting to non-local is not needed, since size is already
+     * an even value. It is here only for clarity. */
+    gr_set_local( *gp, 0 );
 }
 
 
