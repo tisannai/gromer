@@ -20,7 +20,7 @@
 
 #define gr_smsk            0xFFFFFFFFFFFFFFFEL
 
-#define gr_unit_size       ( sizeof( void* ) )
+#define gr_unit_size       ( sizeof( gr_d ) )
 #define gr_byte_size( gr ) ( gr_unit_size * gm_size( gr) )
 #define gr_used_size( gr ) ( gr_unit_size * gr->used )
 #define gr_incr_size( gr ) ( 2*(gm_size(gr)) )
@@ -77,14 +77,14 @@ gr_t gr_new_sized( gr_size_t size )
 }
 
 
-void gr_use( gr_p gp, void* mem, gr_size_t size )
+void gr_use( gr_p gp, gr_d mem, gr_size_t size )
 {
-    gr_assert( ( size % sizeof( void* ) ) == 0 );
+    gr_assert( ( size % sizeof( gr_d ) ) == 0 );
     gr_assert( size >= gr_struct_size( GR_MIN_SIZE ) );
 
     gr_t gr;
     gr = (gr_t)mem;
-    gr->size = ( size - sizeof( gr_s ) ) / sizeof( void* );
+    gr->size = ( size - sizeof( gr_s ) ) / sizeof( gr_d );
     gr_set_local( gr, 1 );
     gr->used = 0;
     gr->data[ 0 ] = NULL;
@@ -113,7 +113,7 @@ void gr_resize( gr_p gp, gr_size_t new_size )
 }
 
 
-void gr_push( gr_p gp, void* item )
+void gr_push( gr_p gp, gr_d item )
 {
     gr_size_t new_used = gm_used( *gp ) + 1;
 
@@ -125,10 +125,10 @@ void gr_push( gr_p gp, void* item )
 }
 
 
-void* gr_pop( gr_t gr )
+gr_d gr_pop( gr_t gr )
 {
     if ( gm_any( gr ) ) {
-        void* ret = gm_last( gr );
+        gr_d ret = gm_last( gr );
         gm_used( gr )--;
         if ( gm_empty( gr ) )
             gm_first( gr ) = NULL;
@@ -139,7 +139,7 @@ void* gr_pop( gr_t gr )
 }
 
 
-void gr_add( gr_p gp, void* item )
+void gr_add( gr_p gp, gr_d item )
 {
     if ( *gp == NULL )
         *gp = gr_new();
@@ -147,9 +147,9 @@ void gr_add( gr_p gp, void* item )
 }
 
 
-void* gr_remove( gr_p gp )
+gr_d gr_remove( gr_p gp )
 {
-    void* ret;
+    gr_d ret;
 
     if ( *gp ) {
         ret = gr_pop( *gp );
@@ -180,7 +180,7 @@ gr_t gr_duplicate( gr_t gr )
 }
 
 
-void* gr_swap( gr_t gr, gr_size_t pos, void* item )
+gr_d gr_swap( gr_t gr, gr_size_t pos, gr_d item )
 {
     if ( gr == NULL )
         return NULL;
@@ -189,7 +189,7 @@ void* gr_swap( gr_t gr, gr_size_t pos, void* item )
         return NULL;
 
     gr_size_t norm;
-    void*     ret;
+    gr_d      ret;
 
     norm = gr_norm_idx( gr, pos );
     ret = gm_nth( gr, norm );
@@ -199,7 +199,7 @@ void* gr_swap( gr_t gr, gr_size_t pos, void* item )
 }
 
 
-void gr_insert_at( gr_p gp, gr_size_t pos, void* item )
+void gr_insert_at( gr_p gp, gr_size_t pos, gr_d item )
 {
     gr_size_t new_used = gm_used( *gp ) + 1;
 
@@ -225,7 +225,7 @@ void gr_insert_at( gr_p gp, gr_size_t pos, void* item )
 }
 
 
-int gr_insert_if( gr_t gr, gr_size_t pos, void* item )
+int gr_insert_if( gr_t gr, gr_size_t pos, gr_d item )
 {
     gr_size_t new_used = gm_used( gr ) + 1;
 
@@ -253,12 +253,12 @@ int gr_insert_if( gr_t gr, gr_size_t pos, void* item )
 }
 
 
-void* gr_delete_at( gr_t gr, gr_size_t pos )
+gr_d gr_delete_at( gr_t gr, gr_size_t pos )
 {
     if ( gm_empty( gr ) )
         return NULL;
 
-    void*     ret;
+    gr_d      ret;
     gr_size_t new_used = gm_used( gr ) - 1;
 
     if ( gm_used( gr ) == 1 ) {
@@ -283,7 +283,7 @@ void* gr_delete_at( gr_t gr, gr_size_t pos )
 
 void gr_sort( gr_t gr, gr_compare_fn_p compare )
 {
-    qsort( gr->data, gr->used, gr_unit_size, compare );
+    qsort( gr->data, gr->used, gr_unit_size, (int ( * )( const void*, const void* ))compare );
 }
 
 
@@ -303,17 +303,17 @@ gr_size_t gr_size( gr_t gr )
     return gm_size( gr );
 }
 
-void** gr_data( gr_t gr )
+gr_d* gr_data( gr_t gr )
 {
     return gr->data;
 }
 
-void* gr_first( gr_t gr )
+gr_d gr_first( gr_t gr )
 {
     return gm_first( gr );
 }
 
-void* gr_last( gr_t gr )
+gr_d gr_last( gr_t gr )
 {
     if ( gm_any( gr ) )
         return gm_last( gr );
@@ -321,7 +321,7 @@ void* gr_last( gr_t gr )
         return NULL;
 }
 
-void* gr_nth( gr_t gr, gr_size_t pos )
+gr_d gr_nth( gr_t gr, gr_size_t pos )
 {
     if ( gm_any( gr ) ) {
         gr_size_t idx;
@@ -357,7 +357,7 @@ int gr_is_full( gr_t gr )
 }
 
 
-gr_pos_t gr_find( gr_t gr, void* item )
+gr_pos_t gr_find( gr_t gr, gr_d item )
 {
     for ( gr_size_t i = 0; i < gm_used( gr ); i++ ) {
         if ( gm_nth( gr, i ) == item )
@@ -368,7 +368,7 @@ gr_pos_t gr_find( gr_t gr, void* item )
 }
 
 
-gr_pos_t gr_find_with( gr_t gr, gr_compare_fn_p compare, void* ref )
+gr_pos_t gr_find_with( gr_t gr, gr_compare_fn_p compare, gr_d ref )
 {
     for ( gr_size_t i = 0; i < gm_used( gr ); i++ ) {
         if ( compare( gm_nth( gr, i ), ref ) )
@@ -454,10 +454,20 @@ static gr_size_t gr_norm_idx( gr_t gr, gr_size_t idx )
  */
 static void gr_resize_to( gr_p gp, gr_size_t new_size )
 {
-    if ( gr_get_local( *gp ) )
+    if ( gr_get_local( *gp ) ) {
+
         *gp = (gr_t)gr_malloc( gr_struct_size( new_size ) );
-    else
+
+    } else {
+
+        gr_size_t old_size = ( *gp )->size;
         *gp = (gr_t)gr_realloc( *gp, gr_struct_size( new_size ) );
+
+        if ( new_size > old_size ) {
+            /* Clear newly allocated memory. */
+            memset( &( (*gp)->data[ old_size * sizeof( gr_d ) ] ), sizeof( gr_d ), new_size - old_size );
+        }
+    }
 
     ( *gp )->size = new_size;
 

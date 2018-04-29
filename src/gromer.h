@@ -14,38 +14,6 @@
 #include <stdint.h>
 
 
-#ifdef GROMER_MEM_API
-
-/*
- * GR_MEM_API allows to use custom memory allocation functions,
- * instead of the default: gr_malloc, gr_free, gr_realloc.
- *
- * If GR_MEM_API is used, the user must provide implementation for the
- * above functions and they must be compatible with malloc etc.
- *
- * Additionally user should compile the library by own means.
- */
-
-extern void* gr_malloc( size_t size );
-extern void gr_free( void* ptr );
-extern void* gr_realloc( void* ptr, size_t size );
-
-#else
-
-/* Default to common memory management functions. */
-
-/** Reserve memory. */
-#define gr_malloc malloc
-
-/** Release memory. */
-#define gr_free free
-
-/** Re-reserve memory. */
-#define gr_realloc realloc
-
-#endif
-
-
 
 #ifndef GROMER_NO_ASSERT
 #include <assert.h>
@@ -75,6 +43,9 @@ typedef uint64_t gr_size_t;
 /** Position type. */
 typedef int64_t gr_pos_t;
 
+/** Data pointer type. */
+typedef void* gr_d;
+
 
 /**
  * Gromer struct.
@@ -83,7 +54,7 @@ struct gr_struct_s
 {
     gr_size_t size;      /**< Reservation size for data (N mod 2==0). */
     gr_size_t used;      /**< Used count for data. */
-    void*     data[ 0 ]; /**< Pointer array. */
+    gr_d      data[ 0 ]; /**< Pointer array. */
 };
 typedef struct gr_struct_s gr_s; /**< Gromer struct. */
 typedef gr_s*              gr_t; /**< Gromer pointer. */
@@ -91,10 +62,10 @@ typedef gr_t*              gr_p; /**< Gromer pointer reference. */
 
 
 /** Resize function type. */
-typedef int ( *gr_resize_fn_p )( gr_p gp, gr_size_t new_size, void* state );
+typedef int ( *gr_resize_fn_p )( gr_p gp, gr_size_t new_size, gr_d state );
 
 /** Compare function type. */
-typedef int ( *gr_compare_fn_p )( const void* a, const void* b );
+typedef int ( *gr_compare_fn_p )( const gr_d a, const gr_d b );
 
 
 /** Iterate over all items. */
@@ -113,11 +84,11 @@ typedef int ( *gr_compare_fn_p )( const void* a, const void* b );
 #define gr_unshift( gp, item ) gr_insert_at( gp, 0, item )
 
 /** Gromer struct size. */
-#define gr_struct_size( size ) ( sizeof( gr_s ) + ( size ) * sizeof( void* ) )
+#define gr_struct_size( size ) ( sizeof( gr_s ) + ( size ) * sizeof( gr_d ) )
 
 /** Make allocation for local (stack) Gromer. */
-#define gr_local_use( gr, buf, size )    \
-    void* buf[ gr_struct_size( size ) ]; \
+#define gr_local_use( gr, buf, size )   \
+    gr_d buf[ gr_struct_size( size ) ]; \
     gr_use( &gr, buf, gr_struct_size( size ) )
 
 
@@ -155,6 +126,39 @@ typedef int ( *gr_compare_fn_p )( const void* a, const void* b );
 
 
 
+#ifdef GROMER_MEM_API
+
+/*
+ * GR_MEM_API allows to use custom memory allocation functions,
+ * instead of the default: gr_malloc, gr_free, gr_realloc.
+ *
+ * If GR_MEM_API is used, the user must provide implementation for the
+ * above functions and they must be compatible with malloc etc. Also
+ * Gromer assumes that gr_malloc sets all new memory to zero.
+ *
+ * Additionally user should compile the library by own means.
+ */
+
+extern void* gr_malloc( size_t size );
+extern void gr_free( void* ptr );
+extern void* gr_realloc( void* ptr, size_t size );
+
+#else
+
+/* Default to common memory management functions. */
+
+/** Reserve memory. */
+#define gr_malloc( size ) calloc( size, 1 )
+
+/** Release memory. */
+#define gr_free free
+
+/** Re-reserve memory. */
+#define gr_realloc realloc
+
+#endif
+
+
 /* ------------------------------------------------------------
  * Create and destroy:
  */
@@ -188,7 +192,7 @@ gr_t gr_new_sized( gr_size_t size );
  * @param mem  Allocation for Gromer.
  * @param size Allocation size (in bytes).
  */
-void gr_use( gr_p gp, void* mem, gr_size_t size );
+void gr_use( gr_p gp, gr_d mem, gr_size_t size );
 
 
 /**
@@ -219,7 +223,7 @@ void gr_resize( gr_p gp, gr_size_t new_size );
  * @param gp   Gromer reference.
  * @param item Item to push.
  */
-void gr_push( gr_p gp, void* item );
+void gr_push( gr_p gp, gr_d item );
 
 
 /**
@@ -232,7 +236,7 @@ void gr_push( gr_p gp, void* item );
  *
  * @return Popped item (or NULL).
  */
-void* gr_pop( gr_t gr );
+gr_d gr_pop( gr_t gr );
 
 
 /**
@@ -244,7 +248,7 @@ void* gr_pop( gr_t gr );
  * @param gp   Gromer reference.
  * @param item Item to add.
  */
-void gr_add( gr_p gp, void* item );
+void gr_add( gr_p gp, gr_d item );
 
 
 /**
@@ -256,7 +260,7 @@ void gr_add( gr_p gp, void* item );
  *
  * @return Popped item (or NULL).
  */
-void* gr_remove( gr_p gp );
+gr_d gr_remove( gr_p gp );
 
 
 /**
@@ -286,7 +290,7 @@ gr_t gr_duplicate( gr_t gr );
  *
  * @return Item swapped out.
  */
-void* gr_swap( gr_t gr, gr_size_t pos, void* item );
+gr_d gr_swap( gr_t gr, gr_size_t pos, gr_d item );
 
 
 /**
@@ -298,7 +302,7 @@ void* gr_swap( gr_t gr, gr_size_t pos, void* item );
  * @param pos  Position.
  * @param item Item to insert.
  */
-void gr_insert_at( gr_p gp, gr_size_t pos, void* item );
+void gr_insert_at( gr_p gp, gr_size_t pos, gr_d item );
 
 
 /**
@@ -312,7 +316,7 @@ void gr_insert_at( gr_p gp, gr_size_t pos, void* item );
  *
  * @return 1 if item was inserted.
  */
-int gr_insert_if( gr_t gr, gr_size_t pos, void* item );
+int gr_insert_if( gr_t gr, gr_size_t pos, gr_d item );
 
 
 /**
@@ -325,7 +329,7 @@ int gr_insert_if( gr_t gr, gr_size_t pos, void* item );
  *
  * @return Item from delete position.
  */
-void* gr_delete_at( gr_t gr, gr_size_t pos );
+gr_d gr_delete_at( gr_t gr, gr_size_t pos );
 
 
 /**
@@ -364,7 +368,7 @@ gr_size_t gr_size( gr_t gr );
  *
  * @return Data array.
  */
-void** gr_data( gr_t gr );
+gr_d* gr_data( gr_t gr );
 
 
 /**
@@ -374,7 +378,7 @@ void** gr_data( gr_t gr );
  *
  * @return First item.
  */
-void* gr_first( gr_t gr );
+gr_d gr_first( gr_t gr );
 
 
 /**
@@ -384,7 +388,7 @@ void* gr_first( gr_t gr );
  *
  * @return Last item.
  */
-void* gr_last( gr_t gr );
+gr_d gr_last( gr_t gr );
 
 
 /**
@@ -395,7 +399,7 @@ void* gr_last( gr_t gr );
  *
  * @return Indexed item.
  */
-void* gr_nth( gr_t gr, gr_size_t pos );
+gr_d gr_nth( gr_t gr, gr_size_t pos );
 
 
 /**
@@ -426,7 +430,7 @@ int gr_is_full( gr_t gr );
  *
  * @return Item index (or GR_NOT_INDEX).
  */
-gr_pos_t gr_find( gr_t gr, void* item );
+gr_pos_t gr_find( gr_t gr, gr_d item );
 
 
 /**
@@ -438,7 +442,7 @@ gr_pos_t gr_find( gr_t gr, void* item );
  *
  * @return Item index (or GR_NOT_INDEX).
  */
-gr_pos_t gr_find_with( gr_t gr, gr_compare_fn_p compare, void* ref );
+gr_pos_t gr_find_with( gr_t gr, gr_compare_fn_p compare, gr_d ref );
 
 
 /**

@@ -8,7 +8,7 @@ void test_basics( void )
     gr_t  gr;
     gr_t  dup;
     char* text = "text";
-    void* ret;
+    gr_d  ret;
 
     gr = gr_new();
     TEST_ASSERT_EQUAL( GR_DEFAULT_SIZE, gr_size( gr ) );
@@ -74,7 +74,7 @@ void test_basics( void )
 }
 
 
-int gr_compare_fn( const void* a, const void* b )
+int gr_compare_fn( const gr_d a, const gr_d b )
 {
     if ( a == b )
         return 1;
@@ -87,7 +87,7 @@ void test_random_access( void )
 {
     gr_t     gr;
     char*    text = "text";
-    void*    tmp;
+    gr_d     tmp;
     gr_pos_t pos;
 
     gr = gr_new();
@@ -178,7 +178,7 @@ void test_random_access( void )
 }
 
 
-int gr_sort_compare( const void* a, const void* b )
+int gr_sort_compare( const gr_d a, const gr_d b )
 {
     char* sa = (char*)a;
     char* sb = (char*)b;
