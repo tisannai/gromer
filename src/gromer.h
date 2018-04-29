@@ -77,6 +77,9 @@ typedef int ( *gr_compare_fn_p )( const gr_d a, const gr_d b );
 /** Item at index with casting to target type. */
 #define gr_item( gr, idx, cast ) ( ( cast )( gr )->data[ ( idx ) ] )
 
+/** Item at index with casting to target type. */
+#define gr_assign( gr, idx, item ) ( ( gr )->data[ ( idx ) ] = ( item ) )
+
 /** Shift item from first index. */
 #define gr_shift( gp ) gr_delete_at( gp, 0 )
 
