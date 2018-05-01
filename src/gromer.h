@@ -104,6 +104,7 @@ typedef int ( *gr_compare_fn_p )( const gr_d a, const gr_d b );
 /** @cond gromer_none */
 #define grnew gr_new
 #define grsiz gr_new_sized
+#define grpag gr_new_page
 #define grdes gr_destroy
 #define grres gr_resize
 #define gruse gr_used
@@ -126,6 +127,7 @@ typedef int ( *gr_compare_fn_p )( const gr_d a, const gr_d b );
 #define grdel gr_delete
 #define grfnd gr_find
 #define grfnw gr_find_with
+#define gralc gr_alloc
 
 #define grfor gr_for_each
 /** @endcond gromer_none */
@@ -189,6 +191,18 @@ gr_t gr_new( void );
  * @return Gromer.
  */
 gr_t gr_new_sized( gr_size_t size );
+
+
+/**
+ * Create Gromer with page (4k) aligned size.
+ *
+ * Paged Gromer is used for temporary scratch pad memory area.
+ *
+ * @param count Page count.
+ *
+ * @return Gromer.
+ */
+gr_t gr_new_page( gr_size_t count );
 
 
 /**
@@ -349,6 +363,27 @@ void gr_sort( gr_t gr, gr_compare_fn_p compare );
 
 
 /**
+ * Allocate consecutive bytes from Gromer.
+ *
+ * Allocation is converted to next Gromer unit size, i.e. minimum
+ * allocation is Gromer unit. If Gromer is used, NULL is returned and
+ * Gromer is not resized.
+ *
+ * @param gr    Gromer.
+ * @param bytes Number of bytes to allocate.
+ *
+ * @return Pointer (or NULL).
+ */
+gr_d gr_alloc( gr_t gr, gr_size_t bytes );
+
+
+
+/* ------------------------------------------------------------
+ * Queries:
+ */
+
+
+/**
  * Return count of container usage.
  *
  * @param gr Gromer.
@@ -366,6 +401,16 @@ gr_size_t gr_used( gr_t gr );
  * @return Reservation size.
  */
 gr_size_t gr_size( gr_t gr );
+
+
+/**
+ * Return total Gromer allocation size in bytes.
+ *
+ * @param gr Gromer.
+ *
+ * @return Total allocation.
+ */
+gr_size_t gr_total_size( gr_t gr );
 
 
 /**
@@ -469,6 +514,26 @@ void gr_set_local( gr_t gr, int val );
  * @return 1 if local (else 0).
  */
 int gr_get_local( gr_t gr );
+
+
+
+/* ------------------------------------------------------------
+ * Utilities:
+ */
+
+
+/**
+ * Allocate number of pages of memory.
+ *
+ * Returned memory is cleared. If count is 0, return size of memory
+ * page.
+ *
+ * @param count[in] Page count.
+ * @param mem[out]  Reference to memory.
+ *
+ * @return Bytes count for allocation (or page size).
+ */
+gr_size_t gr_alloc_pages( gr_size_t count, gr_d* mem );
 
 
 #endif

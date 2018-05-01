@@ -9,6 +9,8 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
+
 #include "gromer.h"
 
 
@@ -38,12 +40,15 @@
 #define gm_first( gr )     ( gr )->data[ 0 ]
 #define gm_nth( gr, pos )  ( gr )->data[ ( pos ) ]
 
+#define gm_unit2byte(n)    ((n)<<3)
+#define gm_byte2unit(n)    ((n)>>3)
+
 /** @endcond gromer_none */
 
 /* clang-format on */
 
 
-
+static void gr_init( gr_t gr, gr_size_t size, int local );
 static gr_size_t gr_legal_size( gr_size_t size );
 static gr_size_t gr_norm_idx( gr_t gr, gr_size_t idx );
 static void gr_resize_to( gr_p gp, gr_size_t new_size );
@@ -66,12 +71,23 @@ gr_t gr_new_sized( gr_size_t size )
     gr_t gr;
 
     size = gr_legal_size( size );
-
     gr = (gr_t)gr_malloc( gr_struct_size( size ) );
-    gr->size = size;
-    gr_set_local( gr, 0 );
-    gr->used = 0;
-    gr->data[ 0 ] = NULL;
+    gr_init( gr, size, 0 );
+
+    return gr;
+}
+
+
+gr_t gr_new_page( gr_size_t count )
+{
+    gr_t      gr;
+    gr_size_t bytes;
+
+    if ( count == 0 )
+        count = 1;
+
+    bytes = gr_alloc_pages( count, (gr_d*)&gr );
+    gr_init( gr, gm_byte2unit( ( bytes - sizeof( gr_s ) ) ), 0 );
 
     return gr;
 }
@@ -83,15 +99,13 @@ gr_t gr_use( gr_d mem, gr_size_t size )
     gr_assert( size >= gr_struct_size( GR_MIN_SIZE ) );
 
     gr_size_t gr_size;
-    gr_size = ( size - sizeof( gr_s ) ) / sizeof( gr_d );
+    gr_size = gm_byte2unit( size - sizeof( gr_s ) );
     gr_assert( ( gr_size % 2 ) == 0 );
 
     gr_t gr;
     gr = (gr_t)mem;
-    gr->size = gr_size;
-    gr_set_local( gr, 1 );
-    gr->used = 0;
-    memset( gr->data, 0, gr_size * sizeof( gr_d ) );
+    gr_init( gr, gr_size, 1 );
+    memset( gr->data, 0, size - sizeof( gr_s ) );
 
     return gr;
 }
@@ -292,6 +306,22 @@ void gr_sort( gr_t gr, gr_compare_fn_p compare )
 }
 
 
+gr_d gr_alloc( gr_t gr, gr_size_t bytes )
+{
+    gr_d      ret;
+    gr_size_t units;
+
+    ret = NULL;
+    units = ( bytes >> 3 ) + ( ( bytes & 0x07ULL ) != 0 );
+
+    if ( gr->size >= ( gr->used + units ) ) {
+        ret = &gr->data[ gr->used ];
+        gr->used += units;
+    }
+
+    return ret;
+}
+
 
 /* ------------------------------------------------------------
  * Queries:
@@ -307,6 +337,13 @@ gr_size_t gr_size( gr_t gr )
 {
     return gm_size( gr );
 }
+
+
+gr_size_t gr_total_size( gr_t gr )
+{
+    return gr_byte_size( gr ) + sizeof( gr_s );
+}
+
 
 gr_d* gr_data( gr_t gr )
 {
@@ -401,8 +438,50 @@ int gr_get_local( gr_t gr )
 
 
 /* ------------------------------------------------------------
+ * Utilities:
+ */
+
+
+gr_size_t gr_alloc_pages( gr_size_t count, gr_d* mem )
+{
+    if ( count == 0 ) {
+        return sysconf( _SC_PAGESIZE );
+    }
+
+    gr_size_t page_size;
+    page_size = sysconf( _SC_PAGESIZE );
+
+    if ( !posix_memalign( mem, page_size, count * page_size ) ) {
+        memset( *mem, 0, count * page_size );
+        return count * page_size;
+    } else {
+        gr_assert( 0 ); // GCOV_EXCL_LINE
+    }
+
+    return 0;
+}
+
+
+
+/* ------------------------------------------------------------
  * Internal support:
  */
+
+
+/**
+ * Initialize Gromer struct to given size and local mode.
+ *
+ * @param gr    Gromer.
+ * @param size  Size.
+ * @param local Local mode.
+ */
+static void gr_init( gr_t gr, gr_size_t size, int local )
+{
+    gr->size = size;
+    gr_set_local( gr, local );
+    gr->used = 0;
+    gr->data[ 0 ] = NULL;
+}
 
 
 /**
@@ -470,7 +549,9 @@ static void gr_resize_to( gr_p gp, gr_size_t new_size )
 
         if ( new_size > old_size ) {
             /* Clear newly allocated memory. */
-            memset( &( (*gp)->data[ old_size * sizeof( gr_d ) ] ), 0, ( new_size - old_size ) * sizeof( gr_d ) );
+            memset( &( ( *gp )->data[ old_size * sizeof( gr_d ) ] ),
+                    0,
+                    ( new_size - old_size ) * sizeof( gr_d ) );
         }
     }
 

@@ -1,7 +1,7 @@
 #include "unity.h"
 #include "gromer.h"
 #include <string.h>
-
+#include <unistd.h>
 
 void test_basics( void )
 {
@@ -247,4 +247,46 @@ void test_static( void )
 
     gr = gr_use( buf, gr_struct_size( 8 ) );
     gr_destroy( &gr );
+}
+
+
+
+void test_alloc( void )
+{
+    gr_t      gr;
+    gr_d      gd;
+    gr_size_t bytes;
+
+    gr = gr_new_page( 2 );
+
+    bytes = gr_alloc_pages( 0, NULL );
+    TEST_ASSERT_TRUE( gr_total_size( gr ) == ( 2 * bytes ) );
+
+    gd = gr_alloc( gr, 1 );
+    TEST_ASSERT_TRUE( gd != NULL );
+    TEST_ASSERT_TRUE( gr->used == 1 );
+
+    gd = gr_alloc( gr, 2 );
+    TEST_ASSERT_TRUE( gd != NULL );
+    TEST_ASSERT_TRUE( gr->used == 2 );
+
+    gd = gr_alloc( gr, 8 );
+    TEST_ASSERT_TRUE( gd != NULL );
+    TEST_ASSERT_TRUE( gr->used == 3 );
+
+    gd = gr_alloc( gr, 9 );
+    TEST_ASSERT_TRUE( gd != NULL );
+    TEST_ASSERT_TRUE( gr->used == 5 );
+
+    gd = gr_alloc( gr, ( gr_size( gr ) - gr->used ) * sizeof( gr_d ) );
+    TEST_ASSERT_TRUE( gd != NULL );
+
+    gd = gr_alloc( gr, 1 );
+    TEST_ASSERT_TRUE( gd == NULL );
+
+    gr_free( gr );
+
+    gr = gr_new_page( 0 );
+    TEST_ASSERT_TRUE( gr_total_size( gr ) == bytes );
+    gr_free( gr );
 }
