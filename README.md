@@ -127,6 +127,22 @@ since often stack allocated memory is enough and heap reservation
 Gromer whether its "local" or not. If Gromer is "local", no memory is
 released, but Gromer reference is set to NULL.
 
+Gromer supports non-local memory management. User can allocate a
+number of pages of memory.
+
+    gr = gr_new_page( 1 );
+
+Junks of memory can be given to various purposes.
+
+    mem = gr_alloc( gr, 1024 );
+
+Memory is cleared, page aligned and continuous. It provides good cache
+locality. `gr_alloc` return NULL when Gromer Page(s) are
+consumed. There is no automatic resizing since it is assumed that
+client wants to preserve the address returned by `gr_alloc`. Memory is
+released with `gr_destroy` when it not needed any more.
+
+
 By default Gromer library uses malloc and friends to do heap
 allocations. If you define GR_MEM_API, you can use your own memory
 allocation functions.
