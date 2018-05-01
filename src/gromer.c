@@ -77,18 +77,23 @@ gr_t gr_new_sized( gr_size_t size )
 }
 
 
-void gr_use( gr_p gp, gr_d mem, gr_size_t size )
+gr_t gr_use( gr_d mem, gr_size_t size )
 {
     gr_assert( ( size % sizeof( gr_d ) ) == 0 );
     gr_assert( size >= gr_struct_size( GR_MIN_SIZE ) );
 
+    gr_size_t gr_size;
+    gr_size = ( size - sizeof( gr_s ) ) / sizeof( gr_d );
+    gr_assert( ( gr_size % 2 ) == 0 );
+
     gr_t gr;
     gr = (gr_t)mem;
-    gr->size = ( size - sizeof( gr_s ) ) / sizeof( gr_d );
+    gr->size = gr_size;
     gr_set_local( gr, 1 );
     gr->used = 0;
-    gr->data[ 0 ] = NULL;
-    *gp = gr;
+    memset( gr->data, 0, gr_size * sizeof( gr_d ) );
+
+    return gr;
 }
 
 
@@ -465,7 +470,7 @@ static void gr_resize_to( gr_p gp, gr_size_t new_size )
 
         if ( new_size > old_size ) {
             /* Clear newly allocated memory. */
-            memset( &( (*gp)->data[ old_size * sizeof( gr_d ) ] ), sizeof( gr_d ), new_size - old_size );
+            memset( &( (*gp)->data[ old_size * sizeof( gr_d ) ] ), 0, ( new_size - old_size ) * sizeof( gr_d ) );
         }
     }
 

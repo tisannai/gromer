@@ -245,6 +245,6 @@ void test_static( void )
 
     gr_destroy( &gr );
 
-    gr_use( &gr, buf, gr_struct_size( 8 ) );
+    gr = gr_use( buf, gr_struct_size( 8 ) );
     gr_destroy( &gr );
 }

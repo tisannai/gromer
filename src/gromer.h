@@ -49,6 +49,9 @@ typedef void* gr_d;
 
 /**
  * Gromer struct.
+ *
+ * NOTE: "size" is strictly forbidden to be used directly. Use
+ * gr_size() instead.
  */
 struct gr_struct_s
 {
@@ -92,7 +95,7 @@ typedef int ( *gr_compare_fn_p )( const gr_d a, const gr_d b );
 /** Make allocation for local (stack) Gromer. */
 #define gr_local_use( gr, buf, size )   \
     gr_d buf[ gr_struct_size( size ) ]; \
-    gr_use( &gr, buf, gr_struct_size( size ) )
+    gr = gr_use( buf, gr_struct_size( size ) )
 
 
 
@@ -191,11 +194,12 @@ gr_t gr_new_sized( gr_size_t size );
 /**
  * Use existing memory allocation for Gromer.
  *
- * @param gp   Gromer reference.
  * @param mem  Allocation for Gromer.
  * @param size Allocation size (in bytes).
+ *
+ * @return Gromer.
  */
-void gr_use( gr_p gp, gr_d mem, gr_size_t size );
+gr_t gr_use( gr_d mem, gr_size_t size );
 
 
 /**
