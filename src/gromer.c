@@ -52,6 +52,7 @@ static void gr_init( gr_t gr, gr_size_t size, int local );
 static gr_size_t gr_legal_size( gr_size_t size );
 static gr_size_t gr_norm_idx( gr_t gr, gr_size_t idx );
 static void gr_resize_to( gr_p gp, gr_size_t new_size );
+void gr_void_assert( void );
 
 
 
