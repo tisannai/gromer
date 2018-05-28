@@ -137,12 +137,13 @@ typedef int ( *gr_compare_fn_p )( const gr_d a, const gr_d b );
 #ifdef GROMER_MEM_API
 
 /*
- * GR_MEM_API allows to use custom memory allocation functions,
+ * GROMER_MEM_API allows to use custom memory allocation functions,
  * instead of the default: gr_malloc, gr_free, gr_realloc.
  *
- * If GR_MEM_API is used, the user must provide implementation for the
- * above functions and they must be compatible with malloc etc. Also
- * Gromer assumes that gr_malloc sets all new memory to zero.
+ * If GROMER_MEM_API is used, the user must provide implementation for
+ * the above functions and they must be compatible with malloc
+ * etc. Also Gromer assumes that gr_malloc sets all new memory to
+ * zero.
  *
  * Additionally user should compile the library by own means.
  */
