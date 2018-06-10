@@ -72,7 +72,7 @@ typedef int ( *gr_compare_fn_p )( const gr_d a, const gr_d b );
 
 
 /** Iterate over all items. */
-#define gr_for_each( gr, iter, cast )                                             \
+#define gr_each( gr, iter, cast )                                                 \
     for ( gr_size_t gr_idx = 0;                                                   \
           ( iter = ( cast )( gr )->data[ gr_idx ] ) && ( gr_idx < ( gr )->used ); \
           gr_idx++ )
@@ -312,7 +312,7 @@ gr_t gr_duplicate( gr_t gr );
  *
  * @return Item swapped out.
  */
-gr_d gr_swap( gr_t gr, gr_size_t pos, gr_d item );
+gr_d gr_swap( gr_t gr, gr_pos_t pos, gr_d item );
 
 
 /**
@@ -324,7 +324,7 @@ gr_d gr_swap( gr_t gr, gr_size_t pos, gr_d item );
  * @param pos  Position.
  * @param item Item to insert.
  */
-void gr_insert_at( gr_p gp, gr_size_t pos, gr_d item );
+void gr_insert_at( gr_p gp, gr_pos_t pos, gr_d item );
 
 
 /**
@@ -338,7 +338,7 @@ void gr_insert_at( gr_p gp, gr_size_t pos, gr_d item );
  *
  * @return 1 if item was inserted.
  */
-int gr_insert_if( gr_t gr, gr_size_t pos, gr_d item );
+int gr_insert_if( gr_t gr, gr_pos_t pos, gr_d item );
 
 
 /**
@@ -351,7 +351,7 @@ int gr_insert_if( gr_t gr, gr_size_t pos, gr_d item );
  *
  * @return Item from delete position.
  */
-gr_d gr_delete_at( gr_t gr, gr_size_t pos );
+gr_d gr_delete_at( gr_t gr, gr_pos_t pos );
 
 
 /**
@@ -452,7 +452,7 @@ gr_d gr_last( gr_t gr );
  *
  * @return Indexed item.
  */
-gr_d gr_nth( gr_t gr, gr_size_t pos );
+gr_d gr_nth( gr_t gr, gr_pos_t pos );
 
 
 /**

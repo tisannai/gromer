@@ -115,7 +115,7 @@ void test_random_access( void )
 
 
     for ( int i = 0; i < GR_DEFAULT_SIZE; i++ ) {
-        gr_insert_at( &gr, gr_used( gr ) - 1, text );
+        gr_insert_at( &gr, -1, text );
     }
 
     TEST_ASSERT_EQUAL( 2 * GR_DEFAULT_SIZE, gr_size( gr ) );
@@ -142,7 +142,7 @@ void test_random_access( void )
 
     char*     item;
     gr_size_t idx = 0;
-    gr_for_each( gr, item, char* )
+    gr_each( gr, item, char* )
     {
         TEST_ASSERT_EQUAL( idx, gr_idx );
         TEST_ASSERT_EQUAL_STRING( text, item );

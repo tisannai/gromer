@@ -50,7 +50,7 @@
 
 static void gr_init( gr_t gr, gr_size_t size, int local );
 static gr_size_t gr_legal_size( gr_size_t size );
-static gr_size_t gr_norm_idx( gr_t gr, gr_size_t idx );
+static gr_size_t gr_norm_idx( gr_t gr, gr_pos_t idx );
 static void gr_resize_to( gr_p gp, gr_size_t new_size );
 void gr_void_assert( void );
 
@@ -200,7 +200,7 @@ gr_t gr_duplicate( gr_t gr )
 }
 
 
-gr_d gr_swap( gr_t gr, gr_size_t pos, gr_d item )
+gr_d gr_swap( gr_t gr, gr_pos_t pos, gr_d item )
 {
     if ( gr == NULL )
         return NULL;
@@ -219,7 +219,7 @@ gr_d gr_swap( gr_t gr, gr_size_t pos, gr_d item )
 }
 
 
-void gr_insert_at( gr_p gp, gr_size_t pos, gr_d item )
+void gr_insert_at( gr_p gp, gr_pos_t pos, gr_d item )
 {
     gr_size_t new_used = gm_used( *gp ) + 1;
 
@@ -227,7 +227,7 @@ void gr_insert_at( gr_p gp, gr_size_t pos, gr_d item )
         gr_resize_to( gp, gr_incr_size( *gp ) );
 
     gr_size_t norm;
-    if ( pos == gm_used( *gp ) )
+    if ( pos == (gr_pos_t)gm_used( *gp ) )
         norm = pos;
     else
         norm = gr_norm_idx( *gp, pos );
@@ -245,7 +245,7 @@ void gr_insert_at( gr_p gp, gr_size_t pos, gr_d item )
 }
 
 
-int gr_insert_if( gr_t gr, gr_size_t pos, gr_d item )
+int gr_insert_if( gr_t gr, gr_pos_t pos, gr_d item )
 {
     gr_size_t new_used = gm_used( gr ) + 1;
 
@@ -253,7 +253,7 @@ int gr_insert_if( gr_t gr, gr_size_t pos, gr_d item )
         return gr_false;
 
     gr_size_t norm;
-    if ( pos == gm_used( gr ) )
+    if ( pos == (gr_pos_t)gm_used( gr ) )
         norm = pos;
     else
         norm = gr_norm_idx( gr, pos );
@@ -273,7 +273,7 @@ int gr_insert_if( gr_t gr, gr_size_t pos, gr_d item )
 }
 
 
-gr_d gr_delete_at( gr_t gr, gr_size_t pos )
+gr_d gr_delete_at( gr_t gr, gr_pos_t pos )
 {
     if ( gm_empty( gr ) )
         return NULL;
@@ -364,7 +364,7 @@ gr_d gr_last( gr_t gr )
         return NULL;
 }
 
-gr_d gr_nth( gr_t gr, gr_size_t pos )
+gr_d gr_nth( gr_t gr, gr_pos_t pos )
 {
     if ( gm_any( gr ) ) {
         gr_size_t idx;
@@ -520,14 +520,26 @@ static gr_size_t gr_legal_size( gr_size_t size )
  *
  * @return Unsigned (positive) index to Gromer.
  */
-static gr_size_t gr_norm_idx( gr_t gr, gr_size_t idx )
+static gr_size_t gr_norm_idx( gr_t gr, gr_pos_t idx )
 {
-    gr_assert( idx < gm_used( gr ) );
+    gr_size_t pidx;
 
-    if ( idx >= gm_used( gr ) )
+    if ( idx < 0 ) {
+        pidx = gm_used( gr ) + idx;
+        idx  = gm_used( gr ) + idx;
+    } else {
+        pidx = idx;
+    }
+
+    if ( pidx >= gm_used( gr ) ) {
+        gr_assert( 0 ); // GCOV_EXCL_LINE
         return gm_used( gr ) - 1; // GCOV_EXCL_LINE
-    else
-        return idx;
+    } else if ( idx < 0 ) {
+        gr_assert( 0 ); // GCOV_EXCL_LINE
+        return 0;
+    } else {
+        return pidx;
+    }
 }
 
 

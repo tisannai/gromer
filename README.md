@@ -144,7 +144,7 @@ released with `gr_destroy` when it not needed any more.
 
 
 By default Gromer library uses malloc and friends to do heap
-allocations. If you define GR_MEM_API, you can use your own memory
+allocations. If you define GROMER_MEM_API, you can use your own memory
 allocation functions.
 
 Custom memory function prototypes:
