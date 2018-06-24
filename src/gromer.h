@@ -134,6 +134,8 @@ typedef int ( *gr_compare_fn_p )( const gr_d a, const gr_d b );
 
 
 
+/* clang-format off */
+
 #ifdef GROMER_MEM_API
 
 /*
@@ -152,20 +154,34 @@ extern void* gr_malloc( size_t size );
 extern void gr_free( void* ptr );
 extern void* gr_realloc( void* ptr, size_t size );
 
-#else
+#else /* GROMER_MEM_API */
+
+
+#    if SIXTEN_USE_MEM == 1
+
+#        define gr_malloc st_alloc
+#        define gr_free st_del
+#        define gr_realloc st_realloc
+
+
+#    else /* SIXTEN_USE_MEM == 1 */
 
 /* Default to common memory management functions. */
 
 /** Reserve memory. */
-#define gr_malloc( size ) calloc( size, 1 )
+#        define gr_malloc( size ) calloc( size, 1 )
 
 /** Release memory. */
-#define gr_free free
+#        define gr_free free
 
 /** Re-reserve memory. */
-#define gr_realloc realloc
+#        define gr_realloc realloc
 
-#endif
+#    endif /* SIXTEN_USE_MEM == 1 */
+
+#endif /* GROMER_MEM_API */
+
+/* clang-format on */
 
 
 /* ------------------------------------------------------------
