@@ -10,9 +10,10 @@
  *
  */
 
+#ifndef SIXTEN_STD_INCLUDE
 #include <stdlib.h>
 #include <stdint.h>
-
+#endif
 
 
 #ifndef GROMER_NO_ASSERT
@@ -60,8 +61,8 @@ struct gr_struct_s
     gr_d      data[ 0 ]; /**< Pointer array. */
 };
 typedef struct gr_struct_s gr_s; /**< Gromer struct. */
-typedef gr_s*              gr_t; /**< Gromer pointer. */
-typedef gr_t*              gr_p; /**< Gromer pointer reference. */
+typedef gr_s*              gr_t; /**< Gromer. */
+typedef gr_t*              gr_p; /**< Gromer reference. */
 
 
 /** Resize function type. */
@@ -136,13 +137,13 @@ typedef int ( *gr_compare_fn_p )( const gr_d a, const gr_d b );
 
 /* clang-format off */
 
-#ifdef GROMER_MEM_API
+#ifdef GROMER_USE_MEM_API
 
 /*
- * GROMER_MEM_API allows to use custom memory allocation functions,
+ * GROMER_USE_MEM_API allows to use custom memory allocation functions,
  * instead of the default: gr_malloc, gr_free, gr_realloc.
  *
- * If GROMER_MEM_API is used, the user must provide implementation for
+ * If GROMER_USE_MEM_API is used, the user must provide implementation for
  * the above functions and they must be compatible with malloc
  * etc. Also Gromer assumes that gr_malloc sets all new memory to
  * zero.
@@ -151,20 +152,20 @@ typedef int ( *gr_compare_fn_p )( const gr_d a, const gr_d b );
  */
 
 extern void* gr_malloc( size_t size );
-extern void gr_free( void* ptr );
+extern void  gr_free( void* ptr );
 extern void* gr_realloc( void* ptr, size_t size );
 
-#else /* GROMER_MEM_API */
+#else /* GROMER_USE_MEM_API */
 
 
-#    if SIXTEN_USE_MEM == 1
+#    if SIXTEN_USE_MEM_API == 1
 
-#        define gr_malloc st_alloc
-#        define gr_free st_del
+#        define gr_malloc  st_alloc
+#        define gr_free    st_del
 #        define gr_realloc st_realloc
 
 
-#    else /* SIXTEN_USE_MEM == 1 */
+#    else /* SIXTEN_USE_MEM_API == 1 */
 
 /* Default to common memory management functions. */
 
@@ -177,9 +178,9 @@ extern void* gr_realloc( void* ptr, size_t size );
 /** Re-reserve memory. */
 #        define gr_realloc realloc
 
-#    endif /* SIXTEN_USE_MEM == 1 */
+#    endif /* SIXTEN_USE_MEM_API == 1 */
 
-#endif /* GROMER_MEM_API */
+#endif /* GROMER_USE_MEM_API */
 
 /* clang-format on */
 
@@ -551,6 +552,9 @@ int gr_get_local( gr_t gr );
  * @return Bytes count for allocation (or page size).
  */
 gr_size_t gr_alloc_pages( gr_size_t count, gr_d* mem );
+
+
+void gr_void_assert( void );
 
 
 #endif
