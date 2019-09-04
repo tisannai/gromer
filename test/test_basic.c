@@ -34,6 +34,7 @@ void test_basics( void )
     for ( int i = 0; i < 13; i++ ) {
         gr_push( &gr, text );
     }
+
     TEST_ASSERT_EQUAL( 24, gr_size( gr ) );
     TEST_ASSERT_EQUAL( 13, gr_used( gr ) );
     /* Push 11 more, and check that size is same as used. */
@@ -180,8 +181,8 @@ void test_random_access( void )
 
 int gr_sort_compare( const gr_d a, const gr_d b )
 {
-    char* sa = (char*)a;
-    char* sb = (char*)b;
+    char* sa = *((char**)a);
+    char* sb = *((char**)b);
 
     return strcmp( sa, sb );
 }

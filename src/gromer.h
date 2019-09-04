@@ -91,7 +91,7 @@ typedef int ( *gr_compare_fn_p )( const gr_d a, const gr_d b );
 #define gr_unshift( gp, item ) gr_insert_at( gp, 0, item )
 
 /** Gromer struct size. */
-#define gr_struct_size( size ) ( sizeof( gr_s ) + ( size ) * sizeof( gr_d ) )
+#define gr_struct_size( size ) ( ( sizeof( gr_s ) ) + ( ( size ) * sizeof( gr_d ) ) )
 
 /** Make allocation for local (stack) Gromer. */
 #define gr_local_use( gr, buf, size )   \
@@ -276,6 +276,20 @@ void gr_push( gr_p gp, gr_d item );
  * @return Popped item (or NULL).
  */
 gr_d gr_pop( gr_t gr );
+
+
+/**
+ * Drop number of items from end.
+ *
+ * If count is bigger than the number of items, then maximum number of
+ * items are removed.
+ *
+ * @param gr    Gromer.
+ * @param count Item count.
+ *
+ * @return Number of items removed.
+ */
+gr_size_t gr_drop( gr_t gr, gr_size_t count );
 
 
 /**
@@ -470,6 +484,17 @@ gr_d gr_last( gr_t gr );
  * @return Indexed item.
  */
 gr_d gr_nth( gr_t gr, gr_pos_t pos );
+
+
+/**
+ * Return reference to nth item.
+ *
+ * @param gr  Gromer.
+ * @param pos Item position.
+ *
+ * @return Referenct to indexed item.
+ */
+gr_d* gr_nth_ref( gr_t gr, gr_pos_t pos );
 
 
 /**

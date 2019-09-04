@@ -26,7 +26,6 @@
 #define gr_unit_size       ( sizeof( gr_d ) )
 #define gr_byte_size( gr ) ( gr_unit_size * gm_size( gr) )
 #define gr_used_size( gr ) ( gr_unit_size * gr->used )
-#define gr_incr_size( gr ) ( 2*(gm_size(gr)) )
 
 #define gr_snor(size)      (((size) & 0x1L) ? (size) + 1 : (size))
 #define gr_local( gr )     ( (gr)->size & 0x1L )
@@ -50,6 +49,8 @@
 
 
 static void gr_init( gr_t gr, gr_size_t size, int local );
+static gr_size_t gr_align_size( gr_size_t new_size );
+static gr_size_t gr_incr_size( gr_t gr );
 static gr_size_t gr_legal_size( gr_size_t size );
 static gr_size_t gr_norm_idx( gr_t gr, gr_pos_t idx );
 static void gr_resize_to( gr_p gp, gr_size_t new_size );
@@ -157,6 +158,19 @@ gr_d gr_pop( gr_t gr )
     } else {
         return NULL;
     }
+}
+
+
+gr_size_t gr_drop( gr_t gr, gr_size_t count )
+{
+    if ( gm_used( gr ) >= count ) {
+        gm_used( gr ) -= count;
+    } else {
+        count = gm_used( gr );
+        gr_reset( gr );
+    }
+
+    return count;
 }
 
 
@@ -376,6 +390,17 @@ gr_d gr_nth( gr_t gr, gr_pos_t pos )
     }
 }
 
+gr_d* gr_nth_ref( gr_t gr, gr_pos_t pos )
+{
+    if ( gm_any( gr ) ) {
+        gr_size_t idx;
+        idx = gr_norm_idx( gr, pos );
+        return &gr->data[ idx ];
+    } else {
+        return NULL;
+    }
+}
+
 
 int gr_is_empty( gr_t gr )
 {
@@ -487,6 +512,44 @@ static void gr_init( gr_t gr, gr_size_t size, int local )
 
 
 /**
+ * Align reservation size for 4k and bigger.
+ *
+ * Small reservations are not effected.
+ *
+ * @param new_size Size to align, if needed.
+ *
+ * @return Valid size.
+ */
+static gr_size_t gr_align_size( gr_size_t new_size )
+{
+    if ( new_size >= 4096 ) {
+        if ( new_size == 4096 ) {
+            new_size = 4096 - sizeof( gr_s );
+        } else {
+            new_size = ( ( ( new_size >> 12 ) + 1 ) << 12 ) - sizeof( gr_s );
+        }
+    }
+
+    return new_size;
+}
+
+
+/**
+ * Calculate incremented memory reservation size.
+ *
+ * Reservation size is doubled from the existing value.
+ *
+ * @param gr Gromer.
+ *
+ * @return New size.
+ */
+static gr_size_t gr_incr_size( gr_t gr )
+{
+    return gr_align_size( gr->size * 2 );
+}
+
+
+/**
  * Convert size to a legal Gromer size.
  *
  * @param size Requested size.
@@ -500,7 +563,7 @@ static gr_size_t gr_legal_size( gr_size_t size )
     if ( size < GR_MIN_SIZE )
         size = GR_MIN_SIZE;
 
-    return size;
+    return gr_align_size( size );
 }
 
 
@@ -563,7 +626,7 @@ static void gr_resize_to( gr_p gp, gr_size_t new_size )
 
         if ( new_size > old_size ) {
             /* Clear newly allocated memory. */
-            memset( &( ( *gp )->data[ old_size * sizeof( gr_d ) ] ),
+            memset( &( ( *gp )->data[ old_size ] ),
                     0,
                     ( new_size - old_size ) * sizeof( gr_d ) );
         }
