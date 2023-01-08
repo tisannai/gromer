@@ -73,9 +73,9 @@ typedef int ( *gr_compare_fn_p )( const gr_d a, const gr_d b );
 
 
 /** Iterate over all items. */
-#define gr_each( gr, iter, cast )                                                 \
-    for ( gr_size_t gr_idx = 0;                                                   \
-          ( iter = ( cast )( gr )->data[ gr_idx ] ) && ( gr_idx < ( gr )->used ); \
+#define gr_each( gr, iter, cast )                                       \
+    for ( gr_size_t gr_idx = 0;                                         \
+          ( gr_idx < ( gr )->used ) && ( iter = ( cast )( gr )->data[ gr_idx ] ); \
           gr_idx++ )
 
 /** Item at index with casting to target type. */
@@ -322,6 +322,14 @@ gr_d gr_remove( gr_p gp );
  * @param gr Gromer.
  */
 void gr_reset( gr_t gr );
+
+
+/**
+ * Clear Gromer, i.e. reset and clear data.
+ *
+ * @param gr Gromer.
+ */
+void gr_clear( gr_t gr );
 
 
 /**

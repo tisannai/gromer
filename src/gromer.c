@@ -203,6 +203,13 @@ void gr_reset( gr_t gr )
 }
 
 
+void gr_clear( gr_t gr )
+{
+    gm_used( gr ) = 0;
+    memset( gr->data, 0, ( gr->size * gr_unit_size ) );
+}
+
+
 gr_t gr_duplicate( gr_t gr )
 {
     gr_t dup;
